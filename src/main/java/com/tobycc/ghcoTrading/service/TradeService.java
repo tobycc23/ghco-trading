@@ -13,12 +13,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
-import static com.tobycc.ghcoTrading.model.enums.AggregateField.*;
+import static com.tobycc.ghcoTrading.model.enums.AggregateField.CURRENCY;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toMap;
 
@@ -27,10 +28,15 @@ public class TradeService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TradeService.class);
 
-    private static final Currency DEFAULT_AGGREGATION_CURRENCY = Currency.USD;
-
     @Autowired
     private CSVParser csvParser;
+
+    @Bean
+    public Map<String, Trade> loadInitialTrades() throws IOException {
+        LOGGER.info("Beginning load of initial sample of trades");
+        List<Trade> rawTrades = csvParser.readInitialTrades();
+        return cleanTrades(rawTrades);
+    }
 
     /**
      * Filtering the list of trades so that only the highest priority of each trade, in the following order, is present:
@@ -45,13 +51,12 @@ public class TradeService {
      *
      * @return filtered Map of trades
      */
-    @Bean
-    public Map<String,Trade> filterTrades(List<Trade> unfilteredTrades) {
-        Map<String,Trade> filteredTrades = new HashMap<>();
-
-        unfilteredTrades.forEach(t ->
+    public Map<String,Trade> cleanTrades(List<Trade> rawTrades) {
+        Map<String,Trade> cleanedTrades = new HashMap<>();
+        LOGGER.info("Cleaning trades to remove redundant action variants that have been replaced");
+        rawTrades.forEach(t ->
                 //We filter the trades into a map
-                filteredTrades.merge(
+                cleanedTrades.merge(
                     t.getTradeId(),
                     t,
                     //The following remapping could be replaced by calling `robustFiltering(currTrade, newTrade)`
@@ -76,52 +81,57 @@ public class TradeService {
             )
         );
 
-        return filteredTrades;
+        return cleanedTrades;
     }
 
-    @Bean
-    public String aggregateInitialTrades(Map<String,Trade> trades) {
-        aggregateTrades(trades, new TreeSet<>(Arrays.asList(BBG_CODE, PORTFOLIO, STRATEGY, USER)));
-        return null;
+    /**
+     * Entry point to where the cleaned trades can be grouped and then aggregated depending on input criteria
+     * @param trades
+     * @param fieldsToGroup
+     * @param convertIntoCurrency
+     */
+    public void aggregateTrades(Map<String,Trade> trades, Set<AggregateField> fieldsToGroup, Optional<Currency> convertIntoCurrency) {
+        Map<String, List<Trade>> groupedTrades = groupTrades(trades, fieldsToGroup, convertIntoCurrency);
+        processPnlAggregation(groupedTrades, convertIntoCurrency);
     }
 
     public void aggregateTrades(Map<String,Trade> trades, Set<AggregateField> fieldsToGroup) {
-        aggregateTrades(trades, fieldsToGroup, DEFAULT_AGGREGATION_CURRENCY);
+        aggregateTrades(trades, fieldsToGroup, Optional.empty());
     }
 
-    public void aggregateTrades(Map<String,Trade> trades, Set<AggregateField> fieldsToGroup, Currency aggregateIntoCurrency) {
+    /**
+     * First we have to group trades by the given fields we wish to group them by
+     * @param trades
+     * @param fieldsToGroup
+     * @param convertIntoCurrency
+     */
+    public Map<String, List<Trade>> groupTrades(Map<String,Trade> trades, Set<AggregateField> fieldsToGroup, Optional<Currency> convertIntoCurrency) {
+        //If we do not specify a currency to convert the trades into, we have to include CURRENCY as a grouping field
+        //(if it is not already) so that the positions are split by currency to make the numbers make sense
+        if(convertIntoCurrency.isEmpty()) {
+            fieldsToGroup.add(CURRENCY);
+        }
+
         //Split trades into aggregated levels based on the fields provided
-        Map<String, List<Trade>> aggregated = trades.values().stream().collect(
+        Map<String, List<Trade>> groupedTrades = trades.values().stream().collect(
                 groupingBy(t -> AggregateField.getAggregateCompositeKey(t, fieldsToGroup)));
 
         //Sort the dates within each grouping
-        aggregated.values().forEach(t -> t.sort(Comparator.comparing(Trade::getDateTime)));
+        groupedTrades.values().forEach(t -> t.sort(Comparator.comparing(Trade::getDateTime)));
 
-        //If CURRENCY is not specified as a field aggregation factor then we provide the aggregrations in both
-        // separate currencies and into one conversion currency (which can be specified, otherwise DEFAULT_AGGREGATION_CURRENCY).
-        Map<String, List<PnLPosition>> pnlAggregated = aggregated.entrySet().stream()
+        return groupedTrades;
+    }
+
+    public void processPnlAggregation(Map<String, List<Trade>> groupedTrades, Optional<Currency> convertIntoCurrency) {
+        Map<String, List<PnLPosition>> pnlAggregated = groupedTrades.entrySet().stream()
                 .collect(toMap(
                         Map.Entry::getKey,
-                        e -> pnlIntoCurrency(e.getValue(), aggregateIntoCurrency)
+                        e -> pnlAggregator(e.getValue(), convertIntoCurrency)
                 ));
 
-        aggregatePrinter(pnlAggregated, aggregateIntoCurrency);
-        csvParser.writeAggregationPositionsIntoCsv(pnlAggregated, aggregateIntoCurrency);
-        System.out.println();
+        pnlAggregationPrinter(pnlAggregated, convertIntoCurrency);
+        csvParser.writeAggregationPositionsIntoCsv(pnlAggregated, convertIntoCurrency);
     }
-
-    public void aggregatePrinter(Map<String, List<PnLPosition>> pnlAggregated, Currency aggregatedIntoCurrency) {
-        //Sort the map keys so output printed is more ordered
-        List<String> keys = pnlAggregated.keySet().stream().sorted().toList();
-
-        keys.forEach(k -> {
-            LOGGER.info("");
-            LOGGER.info("----- " + k + " intraday cash positions, in currency: " + aggregatedIntoCurrency + " -----");
-            pnlAggregated.get(k).stream().skip(1).forEach(pos ->
-                    LOGGER.info(pos.dateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) + ": " + pos.position().toBigInteger()));
-        });
-    }
-
 
     /**
      * Method to calculate PnL cash positions based on value of each trade Bought(Loss) or Sold(Profit)
@@ -129,10 +139,10 @@ public class TradeService {
      *
      * Note: this is pnl cash positions only, does not track how much of a stock we hold
      * @param trades
-     * @param currency
+     * @param convertIntoCurrency
      * @return List of date / cumulative pnl pairs
      */
-    private List<PnLPosition> pnlIntoCurrency(List<Trade> trades, Currency currency) {
+    private List<PnLPosition> pnlAggregator(List<Trade> trades, Optional<Currency> convertIntoCurrency) {
         List<PnLPosition> timeAggregate = new ArrayList<>(List.of(new PnLPosition(LocalDateTime.MIN, BigDecimal.ZERO)));
 
         //For each trade we work out its profit or loss, then sum this with the previous to get cumulative pnl aggregation at a give time
@@ -143,9 +153,9 @@ public class TradeService {
                 val = val.multiply(new BigDecimal(-1));
             }
 
-            //If we are aggregating into a specific currency, we may need to do FX conversion
-            if(!currency.equals(t.getCcy())) {
-                val = val.multiply(FxService.FX_MAP.get(new FxService.FxPair(t.getCcy(), currency)));
+            //If we are converting into a specific currency, we may need to do FX conversion
+            if(convertIntoCurrency.isPresent() && !convertIntoCurrency.get().equals(t.getCcy())) {
+                val = val.multiply(FxService.FX_MAP.get(new FxService.FxPair(t.getCcy(), convertIntoCurrency.get())));
             }
 
             //We sum with previous pnl cumulative to get new pnl cumulative val for this datetime
@@ -156,10 +166,25 @@ public class TradeService {
         return timeAggregate;
     }
 
+    /**
+     * Prints the output of the aggregations
+     * @param pnlAggregated
+     * @param convertIntoCurrency
+     */
+    public void pnlAggregationPrinter(Map<String, List<PnLPosition>> pnlAggregated, Optional<Currency> convertIntoCurrency) {
+        //Sort the map keys so output printed is more ordered
+        List<String> keys = pnlAggregated.keySet().stream().sorted().toList();
 
-
-
-
+        keys.forEach(k -> {
+            LOGGER.info("");
+            LOGGER.info("----- " + k + " intraday cash positions" + convertIntoCurrency
+                    .map(c -> " converted to " + c + " -----")
+                    .orElse(" -----")
+            );
+            pnlAggregated.get(k).stream().skip(1).forEach(pos ->
+                    LOGGER.info(pos.dateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) + ": " + pos.position().toBigInteger()));
+        });
+    }
 
 
 

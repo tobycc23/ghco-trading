@@ -2,3 +2,4 @@ file:
   baseLocation: "/Users/tobycc/Documents/Projects/GHCOTrading/src/main/resources/data"
   initLoad: "sample_trades.csv"
   outputLocation: "output"
+  maxNumberToOutput: 2000
