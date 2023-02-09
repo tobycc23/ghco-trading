@@ -1,20 +1,36 @@
 package com.tobycc.ghcoTrading.service;
 
+import com.tobycc.ghcoTrading.model.PnLPosition;
 import com.tobycc.ghcoTrading.model.Trade;
 import com.tobycc.ghcoTrading.model.enums.Action;
+import com.tobycc.ghcoTrading.model.enums.AggregateField;
+import com.tobycc.ghcoTrading.model.enums.Currency;
+import com.tobycc.ghcoTrading.model.enums.Side;
+import com.tobycc.ghcoTrading.parser.CSVParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+
+import static com.tobycc.ghcoTrading.model.enums.AggregateField.*;
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.toMap;
 
 @Service
 public class TradeService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TradeService.class);
+
+    private static final Currency DEFAULT_AGGREGATION_CURRENCY = Currency.USD;
+
+    @Autowired
+    private CSVParser csvParser;
 
     /**
      * Filtering the list of trades so that only the highest priority of each trade, in the following order, is present:
@@ -25,6 +41,7 @@ public class TradeService {
      * TODO: It would be good to have an extra column for "DateTimeCreated" to show when the record itself was created
      *  so that the TradeTimeInUTC could potentially be modified and we can still tell when the most recent AMEND arrives,
      *  irrespective of this.
+     * No current logic to "uncancel" a trade by doing a consequent AMEND - this could be implemented if that logic is desired.
      *
      * @return filtered Map of trades
      */
@@ -61,6 +78,90 @@ public class TradeService {
 
         return filteredTrades;
     }
+
+    @Bean
+    public String aggregateInitialTrades(Map<String,Trade> trades) {
+        aggregateTrades(trades, new TreeSet<>(Arrays.asList(BBG_CODE, PORTFOLIO, STRATEGY, USER)));
+        return null;
+    }
+
+    public void aggregateTrades(Map<String,Trade> trades, Set<AggregateField> fieldsToGroup) {
+        aggregateTrades(trades, fieldsToGroup, DEFAULT_AGGREGATION_CURRENCY);
+    }
+
+    public void aggregateTrades(Map<String,Trade> trades, Set<AggregateField> fieldsToGroup, Currency aggregateIntoCurrency) {
+        //Split trades into aggregated levels based on the fields provided
+        Map<String, List<Trade>> aggregated = trades.values().stream().collect(
+                groupingBy(t -> AggregateField.getAggregateCompositeKey(t, fieldsToGroup)));
+
+        //Sort the dates within each grouping
+        aggregated.values().forEach(t -> t.sort(Comparator.comparing(Trade::getDateTime)));
+
+        //If CURRENCY is not specified as a field aggregation factor then we provide the aggregrations in both
+        // separate currencies and into one conversion currency (which can be specified, otherwise DEFAULT_AGGREGATION_CURRENCY).
+        Map<String, List<PnLPosition>> pnlAggregated = aggregated.entrySet().stream()
+                .collect(toMap(
+                        Map.Entry::getKey,
+                        e -> pnlIntoCurrency(e.getValue(), aggregateIntoCurrency)
+                ));
+
+        aggregatePrinter(pnlAggregated, aggregateIntoCurrency);
+        csvParser.writeAggregationPositionsIntoCsv(pnlAggregated, aggregateIntoCurrency);
+        System.out.println();
+    }
+
+    public void aggregatePrinter(Map<String, List<PnLPosition>> pnlAggregated, Currency aggregatedIntoCurrency) {
+        //Sort the map keys so output printed is more ordered
+        List<String> keys = pnlAggregated.keySet().stream().sorted().toList();
+
+        keys.forEach(k -> {
+            LOGGER.info("");
+            LOGGER.info("----- " + k + " intraday cash positions, in currency: " + aggregatedIntoCurrency + " -----");
+            pnlAggregated.get(k).stream().skip(1).forEach(pos ->
+                    LOGGER.info(pos.dateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) + ": " + pos.position().toBigInteger()));
+        });
+    }
+
+
+    /**
+     * Method to calculate PnL cash positions based on value of each trade Bought(Loss) or Sold(Profit)
+     * Here, we define a currency for the PnL stream to be converted into.
+     *
+     * Note: this is pnl cash positions only, does not track how much of a stock we hold
+     * @param trades
+     * @param currency
+     * @return List of date / cumulative pnl pairs
+     */
+    private List<PnLPosition> pnlIntoCurrency(List<Trade> trades, Currency currency) {
+        List<PnLPosition> timeAggregate = new ArrayList<>(List.of(new PnLPosition(LocalDateTime.MIN, BigDecimal.ZERO)));
+
+        //For each trade we work out its profit or loss, then sum this with the previous to get cumulative pnl aggregation at a give time
+        for(int index=0; index < trades.size(); index++) {
+            Trade t = trades.get(index);
+            BigDecimal val = t.getPrice().multiply(new BigDecimal(t.getVolume()));
+            if(t.getSide().equals(Side.B)) {
+                val = val.multiply(new BigDecimal(-1));
+            }
+
+            //If we are aggregating into a specific currency, we may need to do FX conversion
+            if(!currency.equals(t.getCcy())) {
+                val = val.multiply(FxService.FX_MAP.get(new FxService.FxPair(t.getCcy(), currency)));
+            }
+
+            //We sum with previous pnl cumulative to get new pnl cumulative val for this datetime
+            timeAggregate.add(new PnLPosition(t.getDateTime(), timeAggregate.get(index).position().add(val)));
+        }
+
+        timeAggregate.remove(0);
+        return timeAggregate;
+    }
+
+
+
+
+
+
+
 
     /**
      * This is some robust filtering, which may be overkill, so I haven't used it in the main code but made a point to keep

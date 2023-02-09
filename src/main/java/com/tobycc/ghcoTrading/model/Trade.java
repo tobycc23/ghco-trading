@@ -68,4 +68,40 @@ public class Trade{
         public Action getAction() {
                 return action;
         }
+
+        public String getBbgCode() {
+                return bbgCode;
+        }
+
+        public String getPortfolio() {
+                return portfolio;
+        }
+
+        public String getAccount() {
+                return account;
+        }
+
+        public String getStrategy() {
+                return strategy;
+        }
+
+        public String getUser() {
+                return user;
+        }
+
+        public Currency getCcy() {
+                return ccy;
+        }
+
+        public Side getSide() {
+                return side;
+        }
+
+        public BigDecimal getPrice() {
+                return price;
+        }
+
+        public Integer getVolume() {
+                return volume;
+        }
 }

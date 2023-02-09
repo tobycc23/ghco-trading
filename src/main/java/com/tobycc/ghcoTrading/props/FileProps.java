@@ -14,6 +14,9 @@ public class FileProps{
     @NotEmpty
     private String initLoad;
 
+    @NotEmpty
+    private String outputLocation;
+
     public String getBaseLocation() {
         return baseLocation;
     }
@@ -28,5 +31,13 @@ public class FileProps{
 
     public void setInitLoad(String initLoad) {
         this.initLoad = initLoad;
+    }
+
+    public String getOutputLocation() {
+        return outputLocation;
+    }
+
+    public void setOutputLocation(String outputLocation) {
+        this.outputLocation = outputLocation;
     }
 }
