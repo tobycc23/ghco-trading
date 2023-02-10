@@ -1,5 +1,6 @@
 file:
-  baseLocation: "/Users/tobycc/Documents/Projects/GHCOTrading/src/main/resources/data"
-  initLoad: "sample_trades.csv"
-  outputLocation: "output"
-  maxNumberToOutput: 2000
+  baseDirectory: "/Users/tobycc/Documents/Projects/GHCOTrading/src/main/resources/data"
+  inputDirectory: "input"
+  outputDirectory: "output"
+  outputToCsv: false
+  maxFilesToOutput: 2000

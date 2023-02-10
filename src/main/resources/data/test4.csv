@@ -1,0 +1,2 @@
+TradeID,BBGCode,Currency,Side,Price,Volume,Portfolio,Action,Account,Strategy,User,TradeTimeUTC,ValueDate
+53c8d9ee11b94552950c843f027d5b00,AAPL US Equity,GBP,B,1554.269583884432,650000,portfolio2,NEW,Account2,Strategy5,User4,2010-01-01T10:59:27.309897,20100101

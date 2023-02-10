@@ -9,6 +9,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 public class GHCOTradingApplication {
 
     public static void main(String[] args) {
+        System.setProperty("spring.devtools.restart.enabled", "false");
         SpringApplication.run(GHCOTradingApplication.class, args);
     }
 

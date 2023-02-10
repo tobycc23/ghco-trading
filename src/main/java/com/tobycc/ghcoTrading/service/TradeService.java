@@ -1,18 +1,20 @@
 package com.tobycc.ghcoTrading.service;
 
+import com.tobycc.ghcoTrading.file.CSVParser;
 import com.tobycc.ghcoTrading.model.PnLPosition;
 import com.tobycc.ghcoTrading.model.Trade;
 import com.tobycc.ghcoTrading.model.enums.Action;
 import com.tobycc.ghcoTrading.model.enums.AggregateField;
 import com.tobycc.ghcoTrading.model.enums.Currency;
 import com.tobycc.ghcoTrading.model.enums.Side;
-import com.tobycc.ghcoTrading.parser.CSVParser;
+import com.tobycc.ghcoTrading.props.FileProps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
-import org.springframework.stereotype.Service;
+import org.springframework.context.annotation.Configuration;
 
+import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -23,7 +25,7 @@ import static com.tobycc.ghcoTrading.model.enums.AggregateField.CURRENCY;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toMap;
 
-@Service
+@Configuration
 public class TradeService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TradeService.class);
@@ -31,11 +33,29 @@ public class TradeService {
     @Autowired
     private CSVParser csvParser;
 
+    @Autowired
+    private FileProps fileProps;
+
     @Bean
-    public Map<String, Trade> loadInitialTrades() throws IOException {
+    public Map<String,Trade> loadInitialTrades() {
         LOGGER.info("Beginning load of initial sample of trades");
-        List<Trade> rawTrades = csvParser.readInitialTrades();
-        return cleanTrades(rawTrades);
+        String inputDir = fileProps.getBaseDirectory() + "/" + fileProps.getInputDirectory();
+        File directoryPath = new File(inputDir);
+
+        //List of all files
+        String[] contents = directoryPath.list();
+        Map<String,Trade> existingTrades = new HashMap<>();
+        for(int i=0; i < Objects.requireNonNull(contents).length; i++) {
+            existingTrades = loadNewTradesFromFile(inputDir + "/" + contents[i], existingTrades);
+        }
+
+        return existingTrades;
+    }
+
+    public Map<String,Trade> loadNewTradesFromFile(String file, Map<String,Trade> existingTrades) {
+        LOGGER.info("Loading in from file: " + file);
+        Optional<List<Trade>> rawTrades = csvParser.checkFileAndReadTrades(file);
+        return rawTrades.isEmpty() ? existingTrades : cleanTrades(rawTrades.get(), existingTrades);
     }
 
     /**
@@ -51,9 +71,8 @@ public class TradeService {
      *
      * @return filtered Map of trades
      */
-    public Map<String,Trade> cleanTrades(List<Trade> rawTrades) {
-        Map<String,Trade> cleanedTrades = new HashMap<>();
-        LOGGER.info("Cleaning trades to remove redundant action variants that have been replaced");
+    public Map<String,Trade> cleanTrades(List<Trade> rawTrades, Map<String,Trade> cleanedTrades) {
+        LOGGER.info("Cleaning new raw trades to remove redundant action variants that have been replaced, size: " + rawTrades.size());
         rawTrades.forEach(t ->
                 //We filter the trades into a map
                 cleanedTrades.merge(
@@ -130,7 +149,11 @@ public class TradeService {
                 ));
 
         pnlAggregationPrinter(pnlAggregated, convertIntoCurrency);
-        csvParser.writeAggregationPositionsIntoCsv(pnlAggregated, convertIntoCurrency);
+
+        //We don't want to write this information to files if it goes over a predefined threshold
+        if(fileProps.isOutputToCsv() && pnlAggregated.size() <= fileProps.getMaxFilesToOutput()) {
+            csvParser.writeAggregationPositionsIntoCsv(pnlAggregated, convertIntoCurrency);
+        }
     }
 
     /**
@@ -181,7 +204,7 @@ public class TradeService {
                     .map(c -> " converted to " + c + " -----")
                     .orElse(" -----")
             );
-            pnlAggregated.get(k).stream().skip(1).forEach(pos ->
+            pnlAggregated.get(k).forEach(pos ->
                     LOGGER.info(pos.dateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) + ": " + pos.position().toBigInteger()));
         });
     }

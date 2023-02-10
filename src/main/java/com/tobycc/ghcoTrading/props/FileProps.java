@@ -9,35 +9,57 @@ import org.springframework.stereotype.Component;
 public class FileProps{
 
     @NotEmpty
-    private String baseLocation;
+    private String baseDirectory;
 
     @NotEmpty
-    private String initLoad;
+    private String inputDirectory;
 
     @NotEmpty
-    private String outputLocation;
+    private String outputDirectory;
 
-    public String getBaseLocation() {
-        return baseLocation;
+    @NotEmpty
+    private boolean outputToCsv;
+
+    @NotEmpty
+    private int maxFilesToOutput;
+
+    public String getBaseDirectory() {
+        return baseDirectory;
     }
 
-    public void setBaseLocation(String baseLocation) {
-        this.baseLocation = baseLocation;
+    public void setBaseDirectory(String baseDirectory) {
+        this.baseDirectory = baseDirectory;
     }
 
-    public String getInitLoad() {
-        return initLoad;
+    public String getInputDirectory() {
+        return inputDirectory;
     }
 
-    public void setInitLoad(String initLoad) {
-        this.initLoad = initLoad;
+    public void setInputDirectory(String inputDirectory) {
+        this.inputDirectory = inputDirectory;
     }
 
-    public String getOutputLocation() {
-        return outputLocation;
+    public String getOutputDirectory() {
+        return outputDirectory;
     }
 
-    public void setOutputLocation(String outputLocation) {
-        this.outputLocation = outputLocation;
+    public void setOutputDirectory(String outputDirectory) {
+        this.outputDirectory = outputDirectory;
+    }
+
+    public boolean isOutputToCsv() {
+        return outputToCsv;
+    }
+
+    public void setOutputToCsv(boolean outputToCsv) {
+        this.outputToCsv = outputToCsv;
+    }
+
+    public int getMaxFilesToOutput() {
+        return maxFilesToOutput;
+    }
+
+    public void setMaxFilesToOutput(int maxFilesToOutput) {
+        this.maxFilesToOutput = maxFilesToOutput;
     }
 }

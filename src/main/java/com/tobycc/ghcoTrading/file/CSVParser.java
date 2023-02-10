@@ -1,4 +1,4 @@
-package com.tobycc.ghcoTrading.parser;
+package com.tobycc.ghcoTrading.file;
 
 import com.opencsv.bean.*;
 import com.opencsv.exceptions.CsvDataTypeMismatchException;
@@ -12,12 +12,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.Writer;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -29,12 +27,38 @@ public class CSVParser {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CSVParser.class);
 
+    private static final String EXPECTED_HEADERS = "TradeID,BBGCode,Currency,Side,Price,Volume,Portfolio,Action,Account,Strategy,User,TradeTimeUTC,ValueDate";
+
     @Autowired
     private FileProps fileProps;
 
-    public List<Trade> readInitialTrades() throws IOException {
-        LOGGER.info("Beginning read of initial sample of trades from file");
-        return readTradesFromCsv(fileProps.getBaseLocation() + "/" + fileProps.getInitLoad());
+    /**
+     * Small robustness checks on file (ensure it is a csv and the headers are as expected - rest left to the csv to bean parser)
+     * @param file
+     * @return
+     * @throws IOException
+     */
+    public Optional<List<Trade>> checkFileAndReadTrades(String file) {
+        if (Files.isDirectory(Paths.get(file))) {
+            LOGGER.info("File: " + file + ". File is not a directory, will be ignored");
+            return Optional.empty();
+        }
+        if(!file.endsWith(".csv")) {
+            LOGGER.info("File: " + file + ". File is not a csv, will not be parsed");
+            return Optional.empty();
+        }
+
+        try(BufferedReader in = new BufferedReader(new FileReader(file))) {
+            if(!in.readLine().equals(EXPECTED_HEADERS)) {
+                LOGGER.info("File: " + file + ". Csv has unexpected headers, will not be parsed");
+                return Optional.empty();
+            }
+
+            return Optional.of(readTradesFromCsv(file));
+        } catch(IOException e) {
+            LOGGER.error("Error reading from file: " + e.getMessage());
+            return Optional.empty();
+        }
     }
 
     public List<Trade> readTradesFromCsv(String file) throws IOException {
@@ -57,7 +81,7 @@ public class CSVParser {
     }
 
     public void writeAggregationPositionsIntoCsv(Map<String, List<PnLPosition>> pnlAggregated, Optional<Currency> convertIntoCurrency) {
-        String outputDirectory = fileProps.getBaseLocation() + "/" + fileProps.getOutputLocation() + "/" +
+        String outputDirectory = fileProps.getBaseDirectory() + "/" + fileProps.getOutputDirectory() + "/" +
                 LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         try {
             Files.createDirectories(Path.of(outputDirectory));
