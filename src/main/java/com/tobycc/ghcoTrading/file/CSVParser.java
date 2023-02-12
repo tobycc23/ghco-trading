@@ -18,6 +18,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -28,6 +29,8 @@ public class CSVParser {
     private static final Logger LOGGER = LoggerFactory.getLogger(CSVParser.class);
 
     private static final String EXPECTED_HEADERS = "TradeID,BBGCode,Currency,Side,Price,Volume,Portfolio,Action,Account,Strategy,User,TradeTimeUTC,ValueDate";
+    private static final String[] HEADERS = new String[]{"TradeID","BBGCode","Currency","Side","Price","Volume","Portfolio","Action","Account",
+            "Strategy","User","TradeTimeUTC","ValueDate"};
 
     @Autowired
     private FileProps fileProps;
@@ -69,6 +72,7 @@ public class CSVParser {
                     .withType(Trade.class)
                     //The initial file is in no logical order, and we sort later anyway when aggregating, this speeds up read
                     .withOrderedResults(false)
+                    .withSkipLines(1)
                     .build();
             List<Trade> trades = csvToBean.parse();
             in.close();
@@ -80,9 +84,47 @@ public class CSVParser {
         }
     }
 
+    /**
+     * Write trades coming in via REST call to new csv files. Place these in the input directory, so they are loaded in
+     * on next startup too.
+     * @param rawTrades
+     */
+    public List<String> writeTradesIntoCsv(List<Trade> rawTrades) {
+        String inputDirectory = fileProps.getBaseDirectory() + "/" + fileProps.getInputDirectory();
+        String outputFile = inputDirectory + "/" + "trades_via_api_" +
+                LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HH:mm:ss")) + ".csv";
+        try {
+            Files.createDirectories(Path.of(inputDirectory));
+            Writer writer = new FileWriter(outputFile);
+
+            ColumnPositionMappingStrategy<Trade> mappingStrategy = new ColumnPositionMappingStrategy<>() {
+                @Override
+                public String[] generateHeader(Trade bean) throws CsvRequiredFieldEmptyException {
+                    super.generateHeader(bean);
+                    return HEADERS;
+                }
+            };
+            mappingStrategy.setType(Trade.class);
+
+            StatefulBeanToCsv<Trade> beanToCsv = new StatefulBeanToCsvBuilder<Trade>(writer)
+                    .withApplyQuotesToAll(false)
+                    .withMappingStrategy(mappingStrategy)
+                    .build();
+            LOGGER.info("Writing trades into csv file " + outputFile);
+            beanToCsv.write(rawTrades);
+            writer.close();
+            return rawTrades.stream().map(Trade::getTradeId).toList();
+        }  catch (IOException e) {
+            LOGGER.error("Failed to create csv file " + outputFile + ": " + e.getMessage());
+            return Collections.emptyList();
+        } catch (CsvRequiredFieldEmptyException | CsvDataTypeMismatchException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public void writeAggregationPositionsIntoCsv(Map<String, List<PnLPosition>> pnlAggregated, Optional<Currency> convertIntoCurrency) {
         String outputDirectory = fileProps.getBaseDirectory() + "/" + fileProps.getOutputDirectory() + "/" +
-                LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+                LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HH:mm:ss"));
         try {
             Files.createDirectories(Path.of(outputDirectory));
             LOGGER.info("Output directory " + outputDirectory + " created successfully");

@@ -2,7 +2,7 @@ package com.tobycc.ghcoTrading.file;
 
 import com.tobycc.ghcoTrading.model.Trade;
 import com.tobycc.ghcoTrading.props.FileProps;
-import com.tobycc.ghcoTrading.service.TradeService;
+import com.tobycc.ghcoTrading.service.TradeLoadingService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +25,7 @@ public class FileWatcherService {
     private Map<String, Trade> existingTrades;
 
     @Autowired
-    private TradeService tradeService;
+    private TradeLoadingService tradeService;
 
     @Autowired
     private FileProps fileProps;

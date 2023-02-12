@@ -1,0 +1,17 @@
+[
+  {
+    "tradeId": "f033fcaf0f164f99886a6bd624900000",
+    "bbgCode": "BRK.A US Equity",
+    "ccy": "USD",
+    "side": "S",
+    "price": 500,
+    "volume": 150000,
+    "portfolio": "porfolio4",
+    "action": "NEW",
+    "account": "Account1",
+    "strategy": "Strategy6",
+    "user": "User5",
+    "dateTime": "2010-01-01T09:25:34.855555",
+    "date": "20100101"
+  }
+]

@@ -21,20 +21,20 @@ public class StartupService {
     private Map<String, Trade> trades;
 
     @Autowired
-    private TradeService tradeService;
+    private TradeAggregationService tradeAggregationService;
 
     /**
-     * To complete our task we complete the initial aggregation of pnl positions “per BBGCode, per portfolio,
-     * per strategy, per user” on startup
+     * To complete our task we can action the initial aggregation of pnl positions “per BBGCode, per portfolio,
+     * per strategy, per user” on startup. Commenting out for now and doing manually for demo purposes
      */
     @PostConstruct
     public void aggregateInitialTrades() {
         //For our example we will convert our aggregations into one currency via FX conversion
-        tradeService.aggregateTrades(trades, new TreeSet<>(Arrays.asList(BBG_CODE, PORTFOLIO, STRATEGY, USER)), Optional.of(Currency.USD));
+        //tradeAggregationService.aggregateTrades(trades, new TreeSet<>(Arrays.asList(BBG_CODE, PORTFOLIO, STRATEGY, USER)), Optional.of(Currency.USD));
 
         //Could do following too/instead if we wanted it split by currency instead of converted into USD
         //This would lead to 11,661 different aggregations which would not be that useful
-//        tradeService.aggregateTrades(trades, new TreeSet<>(Arrays.asList(BBG_CODE, PORTFOLIO, STRATEGY, USER)));
+//        tradeAggregationService.aggregateTrades(trades, new TreeSet<>(Arrays.asList(BBG_CODE, PORTFOLIO, STRATEGY, USER)));
     }
 
 }

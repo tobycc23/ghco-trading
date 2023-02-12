@@ -1,13 +1,8 @@
 package com.tobycc.ghcoTrading.model.enums;
 
 import com.tobycc.ghcoTrading.model.Trade;
-import com.tobycc.ghcoTrading.service.TradeService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Method;
 import java.util.Set;
-import java.util.function.Function;
 
 public enum AggregateField {
     BBG_CODE,

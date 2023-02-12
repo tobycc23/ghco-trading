@@ -1,0 +1,141 @@
+package com.tobycc.ghcoTrading.service;
+
+import com.tobycc.ghcoTrading.file.CSVParser;
+import com.tobycc.ghcoTrading.model.PnLPosition;
+import com.tobycc.ghcoTrading.model.Trade;
+import com.tobycc.ghcoTrading.model.enums.AggregateField;
+import com.tobycc.ghcoTrading.model.enums.Currency;
+import com.tobycc.ghcoTrading.model.enums.Side;
+import com.tobycc.ghcoTrading.props.FileProps;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+
+import static com.tobycc.ghcoTrading.model.enums.AggregateField.CURRENCY;
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.toMap;
+
+@Service
+public class TradeAggregationService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(TradeAggregationService.class);
+
+    @Autowired
+    private CSVParser csvParser;
+
+    @Autowired
+    private FileProps fileProps;
+
+    /**
+     * Entry point to where the cleaned trades can be grouped and then aggregated depending on input criteria
+     * @param trades
+     * @param fieldsToGroup
+     * @param convertIntoCurrency
+     */
+    public void aggregateTrades(Map<String, Trade> trades, Set<AggregateField> fieldsToGroup, Optional<Currency> convertIntoCurrency) {
+        Map<String, List<Trade>> groupedTrades = groupTrades(trades, fieldsToGroup, convertIntoCurrency);
+        processPnlAggregation(groupedTrades, convertIntoCurrency);
+    }
+
+    public void aggregateTrades(Map<String,Trade> trades, Set<AggregateField> fieldsToGroup) {
+        aggregateTrades(trades, fieldsToGroup, Optional.empty());
+    }
+
+    /**
+     * First we have to group trades by the given fields we wish to group them by
+     * @param trades
+     * @param fieldsToGroup
+     * @param convertIntoCurrency
+     */
+    public Map<String, List<Trade>> groupTrades(Map<String,Trade> trades, Set<AggregateField> fieldsToGroup, Optional<Currency> convertIntoCurrency) {
+        //If we do not specify a currency to convert the trades into, we have to include CURRENCY as a grouping field
+        //(if it is not already) so that the positions are split by currency to make the numbers make sense
+        if(convertIntoCurrency.isEmpty()) {
+            fieldsToGroup.add(CURRENCY);
+        }
+
+        //Split trades into aggregated levels based on the fields provided
+        Map<String, List<Trade>> groupedTrades = trades.values().stream().collect(
+                groupingBy(t -> AggregateField.getAggregateCompositeKey(t, fieldsToGroup)));
+
+        //Sort the dates within each grouping
+        groupedTrades.values().forEach(t -> t.sort(Comparator.comparing(Trade::getDateTime)));
+
+        return groupedTrades;
+    }
+
+    public void processPnlAggregation(Map<String, List<Trade>> groupedTrades, Optional<Currency> convertIntoCurrency) {
+        Map<String, List<PnLPosition>> pnlAggregated = groupedTrades.entrySet().stream()
+                .collect(toMap(
+                        Map.Entry::getKey,
+                        e -> pnlAggregator(e.getValue(), convertIntoCurrency)
+                ));
+
+        pnlAggregationPrinter(pnlAggregated, convertIntoCurrency);
+
+        //We don't want to write this information to files if it goes over a predefined threshold
+        if(fileProps.isOutputToCsv() && pnlAggregated.size() <= fileProps.getMaxFilesToOutput()) {
+            csvParser.writeAggregationPositionsIntoCsv(pnlAggregated, convertIntoCurrency);
+        }
+    }
+
+    /**
+     * Method to calculate PnL cash positions based on value of each trade Bought(Loss) or Sold(Profit)
+     * Here, we define a currency for the PnL stream to be converted into.
+     *
+     * Note: this is pnl cash positions only, does not track how much of a stock we hold
+     * @param trades
+     * @param convertIntoCurrency
+     * @return List of date / cumulative pnl pairs
+     */
+    private List<PnLPosition> pnlAggregator(List<Trade> trades, Optional<Currency> convertIntoCurrency) {
+        List<PnLPosition> timeAggregate = new ArrayList<>(List.of(new PnLPosition(LocalDateTime.MIN, BigDecimal.ZERO)));
+
+        //For each trade we work out its profit or loss, then sum this with the previous to get cumulative pnl aggregation at a give time
+        for(int index=0; index < trades.size(); index++) {
+            Trade t = trades.get(index);
+            BigDecimal val = t.getPrice().multiply(new BigDecimal(t.getVolume()));
+            if(t.getSide().equals(Side.B)) {
+                val = val.multiply(new BigDecimal(-1));
+            }
+
+            //If we are converting into a specific currency, we may need to do FX conversion
+            if(convertIntoCurrency.isPresent() && !convertIntoCurrency.get().equals(t.getCcy())) {
+                val = val.multiply(FxService.FX_MAP.get(new FxService.FxPair(t.getCcy(), convertIntoCurrency.get())));
+            }
+
+            //We sum with previous pnl cumulative to get new pnl cumulative val for this datetime
+            timeAggregate.add(new PnLPosition(t.getDateTime(), timeAggregate.get(index).position().add(val)));
+        }
+
+        timeAggregate.remove(0);
+        return timeAggregate;
+    }
+
+    /**
+     * Prints the output of the aggregations
+     * @param pnlAggregated
+     * @param convertIntoCurrency
+     */
+    public void pnlAggregationPrinter(Map<String, List<PnLPosition>> pnlAggregated, Optional<Currency> convertIntoCurrency) {
+        //Sort the map keys so output printed is more ordered
+        List<String> keys = pnlAggregated.keySet().stream().sorted().toList();
+
+        keys.forEach(k -> {
+            LOGGER.info("");
+            LOGGER.info("----- " + k + " intraday cash positions" + convertIntoCurrency
+                    .map(c -> " converted to " + c + " -----")
+                    .orElse(" -----")
+            );
+            pnlAggregated.get(k).forEach(pos ->
+                    LOGGER.info(pos.dateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) + ": " + pos.position().toBigInteger()));
+        });
+    }
+
+}

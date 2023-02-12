@@ -1,3 +1,3 @@
-TradeIDo,BBGCode,Currency,Side,Price,Volume,Portfolio,Action,Account,Strategy,User,TradeTimeUTC,ValueDate
+TradeID,BBGCode,Currency,Side,Price,Volume,Portfolio,Action,Account,Strategy,User,TradeTimeUTC,ValueDate
 269ec017c505493390f02fa6e57df2e5,QQQ US ETF,GBP,B,1395.4662477198958,588754,portfolio1,AMEND,Account2,Strategy4,User3,2010-01-01T08:03:21.559767,20100101
 53c8d9ee11b94552950c843f027d5b96,AAPL US Equity,GBP,B,1554.269583884432,656531,portfolio2,CANCEL,Account2,Strategy5,User4,2010-01-01T09:59:27.309897,20100101
