@@ -13,6 +13,7 @@ public enum AggregateField {
     CURRENCY;
 
     public static String getAggregateCompositeKey(Trade t, Set<AggregateField> fieldsToGroup) {
+        //Won't happen with current logic but keep in as sanity check
         if(fieldsToGroup.isEmpty()) {
             return t.getBbgCode() + "," + t.getAccount() + "," + t.getPortfolio() + ","
                     + t.getStrategy() + "," + t.getUser() + "," + t.getCcy();

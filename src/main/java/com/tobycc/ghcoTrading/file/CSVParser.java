@@ -3,6 +3,7 @@ package com.tobycc.ghcoTrading.file;
 import com.opencsv.bean.*;
 import com.opencsv.exceptions.CsvDataTypeMismatchException;
 import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
+import com.tobycc.ghcoTrading.model.PnLAggregationRequest;
 import com.tobycc.ghcoTrading.model.PnLPosition;
 import com.tobycc.ghcoTrading.model.Trade;
 import com.tobycc.ghcoTrading.model.enums.Currency;
@@ -122,7 +123,7 @@ public class CSVParser {
         }
     }
 
-    public void writeAggregationPositionsIntoCsv(Map<String, List<PnLPosition>> pnlAggregated, Optional<Currency> convertIntoCurrency) {
+    public void writeAggregationPositionsIntoCsv(Map<String, List<PnLPosition>> pnlAggregated, PnLAggregationRequest request) {
         String outputDirectory = fileProps.getBaseDirectory() + "/" + fileProps.getOutputDirectory() + "/" +
                 LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HH:mm:ss"));
         try {
@@ -130,8 +131,7 @@ public class CSVParser {
             LOGGER.info("Output directory " + outputDirectory + " created successfully");
 
             pnlAggregated.forEach((key,value) -> {
-                String outputFile = outputDirectory + "/" + key +
-                        convertIntoCurrency.map(c -> " converted to " + c).orElse("") + ".csv";
+                String outputFile = outputDirectory + "/" + key + request.convertForTitle() + ".csv";
                 try {
                     Writer writer = new FileWriter(outputFile);
                     HeaderColumnNameMappingStrategy<PnLPosition> mappingStrategy = new HeaderColumnNameMappingStrategy<>(){
