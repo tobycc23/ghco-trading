@@ -5,8 +5,8 @@
   "convertIntoCurrency": "GBP",
   "filters": [
     {
-      "bbgCode": "VOO US ETF",
-      "strategy": "Strategy6",
+      "bbgCode": "GOOG US Equity",
+      "strategy": "Strategy1",
       "portfolio": "portfolio1",
       "account": "Account1"
     }

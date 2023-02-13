@@ -21,6 +21,9 @@ public class FileProps{
     private boolean outputToCsv;
 
     @NotEmpty
+    private boolean outputToConsole;
+
+    @NotEmpty
     private int maxFilesToOutput;
 
     public String getBaseDirectory() {
@@ -61,5 +64,13 @@ public class FileProps{
 
     public void setMaxFilesToOutput(int maxFilesToOutput) {
         this.maxFilesToOutput = maxFilesToOutput;
+    }
+
+    public boolean isOutputToConsole() {
+        return outputToConsole;
+    }
+
+    public void setOutputToConsole(boolean outputToConsole) {
+        this.outputToConsole = outputToConsole;
     }
 }

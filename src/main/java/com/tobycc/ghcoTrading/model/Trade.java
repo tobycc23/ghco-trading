@@ -3,6 +3,7 @@ package com.tobycc.ghcoTrading.model;
 import com.opencsv.bean.CsvBindByName;
 import com.opencsv.bean.CsvBindByPosition;
 import com.opencsv.bean.CsvDate;
+import com.tobycc.ghcoTrading.config.DateUtils;
 import com.tobycc.ghcoTrading.model.enums.Action;
 import com.tobycc.ghcoTrading.model.enums.Currency;
 import com.tobycc.ghcoTrading.model.enums.Side;
@@ -79,7 +80,7 @@ public class Trade{
         @NotNull
         @CsvBindByName(column = "ValueDate", required = true)
         @CsvBindByPosition(position = 12)
-        @CsvDate("yyyyMMdd")
+        @CsvDate(DateUtils.DATE_FORMAT)
         private LocalDate date;
 
         public Trade() {

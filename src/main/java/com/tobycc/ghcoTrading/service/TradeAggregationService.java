@@ -1,5 +1,6 @@
 package com.tobycc.ghcoTrading.service;
 
+import com.tobycc.ghcoTrading.config.DateUtils;
 import com.tobycc.ghcoTrading.file.CSVParser;
 import com.tobycc.ghcoTrading.model.PnLAggregationRequest;
 import com.tobycc.ghcoTrading.model.PnLPosition;
@@ -11,8 +12,6 @@ import com.tobycc.ghcoTrading.model.enums.Side;
 import com.tobycc.ghcoTrading.props.FileProps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -30,6 +29,7 @@ public class TradeAggregationService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TradeAggregationService.class);
 
+    //Aggregated trades
     private Map<String, List<PnLPosition>> aggregatedTrades;
 
     private final CSVParser csvParser;
@@ -90,7 +90,10 @@ public class TradeAggregationService {
                         e -> pnlAggregator(e.getValue(), request.convertIntoCurrency())
                 ));
 
-        pnlAggregationPrinter(pnlAggregated, request);
+        //TODO following two steps of outputting aggregated data is better done via async job (via ActiveMQ etc) so REST call returns quickly
+        if(fileProps.isOutputToConsole()) {
+            pnlAggregationPrinter(pnlAggregated, request);
+        }
 
         //We don't want to write this information to files if it goes over a predefined threshold
         if(fileProps.isOutputToCsv() && pnlAggregated.size() <= fileProps.getMaxFilesToOutput()) {
@@ -147,7 +150,7 @@ public class TradeAggregationService {
             LOGGER.info("");
             LOGGER.info("----- " + k + " intraday cash positions" + request.convertForTitle() + " -----");
             pnlAggregated.get(k).forEach(pos ->
-                    LOGGER.info(pos.dateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) + ": " + pos.position().toBigInteger()));
+                    LOGGER.info(pos.dateTime().format(DateTimeFormatter.ofPattern(DateUtils.DATETIME_FORMAT)) + ": " + pos.position().toBigInteger()));
         });
     }
 

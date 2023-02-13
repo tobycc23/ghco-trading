@@ -1,0 +1,32 @@
+[
+  {
+    "tradeId": "f033fcaf0f164f99886a6bd624100000",
+    "bbgCode": "GOOG US Equity",
+    "ccy": "USD",
+    "side": "S",
+    "price": 5000,
+    "volume": 150000,
+    "portfolio": "portfolio1",
+    "action": "NEW",
+    "account": "Account1",
+    "strategy": "Strategy1",
+    "user": "User4",
+    "dateTime": "2010-01-01T09:25:34.855555",
+    "date": "2010-01-01"
+  },
+  {
+    "tradeId": "4b64fd195ed14264a3354f1af74319e3",
+    "bbgCode": "GOOG US Equity",
+    "ccy": "USD",
+    "side": "B",
+    "price": 1633.4579207851282,
+    "volume": 535093,
+    "portfolio": "portfolio1",
+    "action": "CANCEL",
+    "account": "Account1",
+    "strategy": "Strategy1",
+    "user": "User5",
+    "dateTime": "2012-09-30T14:13:33.374909",
+    "date": "2012-09-30"
+  }
+]

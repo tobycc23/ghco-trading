@@ -3,4 +3,5 @@ file:
   inputDirectory: "input"
   outputDirectory: "output"
   outputToCsv: false
+  outputToConsole: true
   maxFilesToOutput: 2000

@@ -4,19 +4,21 @@ import com.tobycc.ghcoTrading.file.CSVParser;
 import com.tobycc.ghcoTrading.model.Trade;
 import com.tobycc.ghcoTrading.model.enums.Action;
 import com.tobycc.ghcoTrading.props.FileProps;
+import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.util.*;
 
-@Configuration
+@Service
 public class TradeLoadingService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TradeLoadingService.class);
+
+    //Loaded trades
+    private Map<String,Trade> loadedTrades = new HashMap<>();
 
     private final CSVParser csvParser;
     private final FileProps fileProps;
@@ -26,26 +28,23 @@ public class TradeLoadingService {
         this.fileProps = fileProps;
     }
 
-    @Bean
-    public Map<String,Trade> loadInitialTrades() {
+    @PostConstruct
+    public void loadInitialTrades() {
         LOGGER.info("Beginning load of initial sample of trades");
         String inputDir = fileProps.getBaseDirectory() + "/" + fileProps.getInputDirectory();
         File directoryPath = new File(inputDir);
 
         //List of all files
         String[] contents = directoryPath.list();
-        Map<String,Trade> existingTrades = new HashMap<>();
         for(int i=0; i < Objects.requireNonNull(contents).length; i++) {
-            existingTrades = loadNewTradesFromFile(inputDir + "/" + contents[i], existingTrades);
+            loadNewTradesFromFile(inputDir + "/" + contents[i]);
         }
-
-        return existingTrades;
     }
 
-    public Map<String,Trade> loadNewTradesFromFile(String file, Map<String,Trade> existingTrades) {
+    public void loadNewTradesFromFile(String file) {
         LOGGER.info("Loading in from file: " + file);
         Optional<List<Trade>> rawTrades = csvParser.checkFileAndReadTrades(file);
-        return rawTrades.isEmpty() ? existingTrades : cleanTrades(rawTrades.get(), existingTrades);
+        rawTrades.ifPresent(trades -> setLoadedTrades(cleanTrades(trades, getLoadedTrades())));
     }
 
     /**
@@ -167,5 +166,13 @@ public class TradeLoadingService {
         }
 
         return newTrade.getDateTime().isBefore(currTrade.getDateTime()) ? currTrade : newTrade;
+    }
+
+    public Map<String, Trade> getLoadedTrades() {
+        return loadedTrades;
+    }
+
+    public void setLoadedTrades(Map<String, Trade> loadedTrades) {
+        this.loadedTrades = loadedTrades;
     }
 }

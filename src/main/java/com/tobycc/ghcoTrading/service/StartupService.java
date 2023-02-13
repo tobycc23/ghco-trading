@@ -1,27 +1,25 @@
 package com.tobycc.ghcoTrading.service;
 
 import com.tobycc.ghcoTrading.model.PnLAggregationRequest;
-import com.tobycc.ghcoTrading.model.Trade;
-import com.tobycc.ghcoTrading.model.TradeFilter;
 import com.tobycc.ghcoTrading.model.enums.Currency;
 import jakarta.annotation.PostConstruct;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Optional;
+import java.util.TreeSet;
 
 import static com.tobycc.ghcoTrading.model.enums.AggregateField.*;
-import static com.tobycc.ghcoTrading.model.enums.AggregateField.USER;
 
 @Service
 public class StartupService {
 
-    private final Map<String, Trade> trades;
     private final TradeAggregationService tradeAggregationService;
+    private final TradeLoadingService tradeLoadingService;
 
-    public StartupService(Map<String, Trade> trades, TradeAggregationService tradeAggregationService) {
-        this.trades = trades;
+    public StartupService(TradeAggregationService tradeAggregationService, TradeLoadingService tradeLoadingService) {
         this.tradeAggregationService = tradeAggregationService;
+        this.tradeLoadingService = tradeLoadingService;
     }
 
     /**
@@ -30,23 +28,25 @@ public class StartupService {
      */
     @PostConstruct
     public void aggregateInitialTrades() {
+
         //For our example we will convert our aggregations into one currency via FX conversion
-//        tradeAggregationService.aggregateTrades(trades, new PnLAggregationRequest(
-//                Optional.of(new TreeSet<>(Arrays.asList(BBG_CODE, PORTFOLIO, STRATEGY, USER))),
-//                Optional.of(Currency.USD),
-//                Optional.of(new HashSet<>(Arrays.asList(
-//                        new TradeFilter(Optional.empty(), Optional.empty(), Optional.empty(), Optional.of("Account1"), Optional.of("Strategy5"), Optional.empty()),
-//                        new TradeFilter(Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.of("Strategy6"), Optional.empty())
-//                )))
-//        ));
+        tradeAggregationService.aggregateTrades(tradeLoadingService.getLoadedTrades(), new PnLAggregationRequest(
+                Optional.of(new TreeSet<>(Arrays.asList(BBG_CODE, PORTFOLIO, STRATEGY, USER))),
+                Optional.of(Currency.USD),
+                Optional.empty()
+        ));
+
+        /*
 
         //Could do following too/instead if we wanted it split by currency instead of converted into USD
         //This would lead to 11,661 different aggregations which would not be that useful
-//        tradeAggregationService.aggregateTrades(trades, new PnLAggregationRequest(
-//                Optional.of(new TreeSet<>(Arrays.asList(BBG_CODE, PORTFOLIO, STRATEGY, USER))),
-//                Optional.empty(),
-//                Optional.empty()
-//        ));
+        tradeAggregationService.aggregateTrades(tradeLoadingService.getLoadedTrades(), new PnLAggregationRequest(
+                Optional.of(new TreeSet<>(Arrays.asList(BBG_CODE, PORTFOLIO, STRATEGY, USER))),
+                Optional.empty(),
+                Optional.empty()
+        ));
+
+         */
     }
 
 }

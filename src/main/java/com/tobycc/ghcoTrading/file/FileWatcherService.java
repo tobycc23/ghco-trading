@@ -20,13 +20,11 @@ public class FileWatcherService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FileWatcherService.class);
 
-    private final Map<String, Trade> existingTrades;
     private final TradeLoadingService tradeService;
     private final FileProps fileProps;
     private final WatchService watchService;
 
-    public FileWatcherService(Map<String, Trade> existingTrades, TradeLoadingService tradeService, FileProps fileProps, WatchService watchService) {
-        this.existingTrades = existingTrades;
+    public FileWatcherService(TradeLoadingService tradeService, FileProps fileProps, WatchService watchService) {
         this.tradeService = tradeService;
         this.fileProps = fileProps;
         this.watchService = watchService;
@@ -39,7 +37,7 @@ public class FileWatcherService {
             for (WatchEvent<?> event : key.pollEvents()) {
                 String fullPath = fileProps.getBaseDirectory() + "/" + fileProps.getInputDirectory() + "/" + event.context();
                 LOGGER.info("File added: " + fullPath);
-                tradeService.loadNewTradesFromFile(fullPath, existingTrades);
+                tradeService.loadNewTradesFromFile(fullPath);
             }
             key.reset();
         }

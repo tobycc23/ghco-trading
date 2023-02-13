@@ -1,3 +1,0 @@
-TradeID,BBGCode,Currency,Side,Price,Volume,Portfolio,Action,Account,Strategy,User,TradeTimeUTC,ValueDate
-f033fcaf0f164f99886a6bd6249a3b6a,BRK.A US Equity,JPY,B,1893.822443063602,223698,portfolio5,AMEND,Account1,Strategy6,User5,2010-01-01T09:25:34.894774,20100101
-f033fcaf0f164f99886a6bd624cccccc,BRK.A US Equity,JPY,B,1899.822443063602,223600,portfolio5,NEW,Account1,Strategy6,User5,2010-01-01T09:25:34.894999,20100101

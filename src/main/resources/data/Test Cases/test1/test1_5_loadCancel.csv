@@ -1,0 +1,2 @@
+TradeID,BBGCode,Currency,Side,Price,Volume,Portfolio,Action,Account,Strategy,User,TradeTimeUTC,ValueDate
+269ec017c505493390f02fa6e7777777,QQQ US ETF,NOK,B,10000,3000000,portfolio1,CANCEL,Account2,Strategy4,User1,2012-01-01T08:03:21.559767,20120101

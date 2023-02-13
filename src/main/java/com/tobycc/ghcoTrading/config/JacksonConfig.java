@@ -15,8 +15,6 @@ import org.springframework.context.annotation.Configuration;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 
 @Configuration
@@ -25,7 +23,7 @@ public class JacksonConfig {
     @Bean
     public Jackson2ObjectMapperBuilderCustomizer jackson2ObjectMapperBuilderCustomizer() {
         return builder -> {
-            DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+            DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern(DateUtils.DATE_FORMAT);
             builder.deserializers(new LocalDateDeserializer(dateFormatter));
             builder.serializers(new LocalDateSerializer(dateFormatter));
         };
@@ -41,7 +39,7 @@ public class JacksonConfig {
         localDateTimeModule.addSerializer(LocalDateTime.class, new JsonSerializer<>() {
             @Override
             public void serialize(LocalDateTime localDateTime, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
-                jsonGenerator.writeString(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS").format(localDateTime));
+                jsonGenerator.writeString(DateTimeFormatter.ofPattern(DateUtils.DATETIME_FORMAT).format(localDateTime));
             }
         });
         objectMapper.registerModule(localDateTimeModule);

@@ -6,11 +6,9 @@ import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
 import com.tobycc.ghcoTrading.model.PnLAggregationRequest;
 import com.tobycc.ghcoTrading.model.PnLPosition;
 import com.tobycc.ghcoTrading.model.Trade;
-import com.tobycc.ghcoTrading.model.enums.Currency;
 import com.tobycc.ghcoTrading.props.FileProps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.*;
@@ -29,9 +27,10 @@ public class CSVParser {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CSVParser.class);
 
-    private static final String EXPECTED_HEADERS = "TradeID,BBGCode,Currency,Side,Price,Volume,Portfolio,Action,Account,Strategy,User,TradeTimeUTC,ValueDate";
-    private static final String[] HEADERS = new String[]{"TradeID","BBGCode","Currency","Side","Price","Volume","Portfolio","Action","Account",
-            "Strategy","User","TradeTimeUTC","ValueDate"};
+    private static final String EXPECTED_HEADERS =
+            "TradeID,BBGCode,Currency,Side,Price,Volume,Portfolio,Action,Account,Strategy,User,TradeTimeUTC,ValueDate";
+    private static final String[] HEADERS =
+            new String[]{"TradeID","BBGCode","Currency","Side","Price","Volume","Portfolio","Action","Account", "Strategy","User","TradeTimeUTC","ValueDate"};
 
     private final FileProps fileProps;
 
@@ -95,8 +94,8 @@ public class CSVParser {
      */
     public List<String> writeTradesIntoCsv(List<Trade> rawTrades) {
         String inputDirectory = fileProps.getBaseDirectory() + "/" + fileProps.getInputDirectory();
-        String outputFile = inputDirectory + "/" + "trades_via_api_" +
-                LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HH:mm:ss")) + ".csv";
+        String outputFile = inputDirectory + "/" +
+                "trades_via_api_" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HH:mm:ss")) + ".csv";
         try {
             Files.createDirectories(Path.of(inputDirectory));
             Writer writer = new FileWriter(outputFile);
@@ -127,8 +126,8 @@ public class CSVParser {
     }
 
     public void writeAggregationPositionsIntoCsv(Map<String, List<PnLPosition>> pnlAggregated, PnLAggregationRequest request) {
-        String outputDirectory = fileProps.getBaseDirectory() + "/" + fileProps.getOutputDirectory() + "/" +
-                LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HH:mm:ss"));
+        String outputDirectory = fileProps.getBaseDirectory() + "/" +
+                fileProps.getOutputDirectory() + "/" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HH:mm:ss"));
         try {
             Files.createDirectories(Path.of(outputDirectory));
             LOGGER.info("Output directory " + outputDirectory + " created successfully");

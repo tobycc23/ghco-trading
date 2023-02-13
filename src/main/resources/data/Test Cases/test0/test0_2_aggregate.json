@@ -1,3 +1,5 @@
+//Run from "Aggregate Only" then "Show Graph"
+
 {
   "aggregationFields": [
     "BBG_CODE", "PORTFOLIO", "STRATEGY", "USER"

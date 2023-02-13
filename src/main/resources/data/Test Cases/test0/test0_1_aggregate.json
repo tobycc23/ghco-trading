@@ -1,0 +1,7 @@
+//Run from "AggregateOnly"
+{
+  "aggregationFields": [
+    "BBG_CODE", "PORTFOLIO", "STRATEGY", "USER"
+  ],
+  "convertIntoCurrency": "USD"
+}
