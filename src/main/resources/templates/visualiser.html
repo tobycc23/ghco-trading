@@ -24,14 +24,26 @@
             sentData[k].forEach(pnlPosition => {
                 var positionArray = new Array(nOfLines + 1).fill(null);
                 positionArray[0] = new Date(pnlPosition.dateTime);
-                positionArray[index + 1] = pnlPosition.position;
+                positionArray[index + 1] = pnlPosition.position / 1000000;
                 data.addRow(positionArray);
         }));
 
         var options = {
           interpolateNulls: true,
           title: [[${title}]],
-          legend: { position: 'top' }
+          titleTextStyle: { bold: false },
+          vAxis: {
+            title: 'Position (in millions)'
+          },
+          hAxis: {
+            title: 'TradeTimeUTC'
+          },
+          legend: { position: 'top' },
+          explorer: {
+             axis: 'horizontal',
+             keepInBounds: true,
+             maxZoomIn: 8.0
+          }
         };
 
         var chart = new google.visualization.LineChart(document.getElementById('pnl_line_chart'));

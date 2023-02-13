@@ -1,0 +1,14 @@
+{
+  "aggregationFields": [
+    "BBG_CODE", "PORTFOLIO", "STRATEGY", "USER"
+  ],
+  "convertIntoCurrency": "USD",
+  "filters": [
+    {
+      "account": "Account1",
+      "user": "User1",
+      "strategy": "Strategy1",
+      "bbgCode": "AAPL US Equity"
+    }
+  ]
+}

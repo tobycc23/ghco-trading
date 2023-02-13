@@ -1,0 +1,10 @@
+{
+  "aggregationFields": [
+    "USER"
+  ],
+  "filters": [
+    {
+      "user": "User1"
+    }
+  ]
+}
