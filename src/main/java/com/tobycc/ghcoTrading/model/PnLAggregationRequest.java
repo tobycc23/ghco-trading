@@ -21,7 +21,7 @@ public record PnLAggregationRequest(
 ) {
 
     public String convertForTitle() {
-        return this.convertIntoCurrency().map(c -> " converted to " + c).orElse("") +
+        return this.convertIntoCurrency().map(c -> " Currency converted to " + c).orElse("") +
                 this.filters().map(filters ->
                         " " + filters.stream().map(TradeFilter::toString).collect(Collectors.joining(","))
                 ).orElse("");

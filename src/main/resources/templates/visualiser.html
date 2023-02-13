@@ -15,6 +15,7 @@
 
         var sentData = JSON.parse([[${chartData}]]);
         var lines = Object.keys(sentData);
+        lines.sort();
         var nOfLines = lines.length;
 
         lines.forEach(k => data.addColumn('number', k));
@@ -29,6 +30,7 @@
 
         var options = {
           interpolateNulls: true,
+          title: [[${title}]],
           legend: { position: 'top' }
         };
 
@@ -39,7 +41,7 @@
     </script>
 </head>
 <body>
-<h3>PnL Positions</h3>
-<div id="pnl_line_chart" style="width: 2000px; height: 1000px"></div>
+<div><h3>PnL Positions</h3></div>
+<div id="pnl_line_chart" style="width: 1500px; height: 750px"></div>
 </body>
 </html>

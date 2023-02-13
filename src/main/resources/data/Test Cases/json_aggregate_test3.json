@@ -1,0 +1,14 @@
+{
+  "aggregationFields": [
+    "USER","ACCOUNT"
+  ],
+  "convertIntoCurrency": "KRW",
+  "filters": [
+    {
+      "account": "Account1"
+    },
+    {
+      "account": "Account2"
+    }
+  ]
+}

@@ -7,6 +7,7 @@ import com.tobycc.ghcoTrading.model.Trade;
 import com.tobycc.ghcoTrading.service.TradeAggregationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +16,8 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.util.UriUtils;
 
 import java.util.Collections;
 import java.util.List;
@@ -60,6 +63,8 @@ public class TradeController {
     @Operation(summary = "Get a PnL aggregation result based on input parameters and show graph")
     public String pnlAggregationAndVisualisation(@RequestBody PnLAggregationRequest request) {
         tradeAggregationService.aggregateTrades(existingTrades, request);
-        return "redirect:/api/v1/visualiser";
+        String title = request.convertForTitle();
+        String redirect =  "redirect:/api/v1/visualiser?title=" + UriUtils.encode(title, "UTF-8");
+        return redirect;
     }
 }
