@@ -24,12 +24,12 @@ public record TradeFilter(
         @Override
         public String toString() {
                 return "TradeFilter{" +
-                        (bbgCode.map(s -> "bbgCode=" + s + ",").orElse("")) +
-                        (ccy.map(s -> "ccy=" + s + ",").orElse("")) +
-                        (portfolio.map(s -> "portfolio=" + s + ",").orElse("")) +
-                        (account.map(s -> "account=" + s + ",").orElse("")) +
-                        (strategy.map(s -> "strategy=" + s + ",").orElse("")) +
-                        (user.map(s -> "user=" + s).orElse("")) +
-                        '}';
+                        (bbgCode.map(s -> " bbgCode=" + s).orElse("")) +
+                        (ccy.map(s -> " ccy=" + s).orElse("")) +
+                        (portfolio.map(s -> " portfolio=" + s).orElse("")) +
+                        (account.map(s -> " account=" + s).orElse("")) +
+                        (strategy.map(s -> " strategy=" + s).orElse("")) +
+                        (user.map(s -> " user=" + s).orElse("")) +
+                        " }";
         }
 }

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Google Charts With Thymeleaf</title>
+    <!--Load the AJAX API-->
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript" th:inline="javascript">
+      google.charts.load('current', {'packages':['corechart']});
+      google.charts.setOnLoadCallback(drawChart);
+
+      function drawChart() {
+        var data = new google.visualization.DataTable();
+        data.addColumn('date', 'TradeTimeUTC');
+
+        var sentData = JSON.parse([[${chartData}]]);
+        var lines = Object.keys(sentData);
+        var nOfLines = lines.length;
+
+        lines.forEach(k => data.addColumn('number', k));
+
+        lines.forEach((k,index) =>
+            sentData[k].forEach(pnlPosition => {
+                var positionArray = new Array(nOfLines + 1).fill(null);
+                positionArray[0] = new Date(pnlPosition.dateTime);
+                positionArray[index + 1] = pnlPosition.position;
+                data.addRow(positionArray);
+        }));
+
+        var options = {
+          interpolateNulls: true,
+          legend: { position: 'top' }
+        };
+
+        var chart = new google.visualization.LineChart(document.getElementById('pnl_line_chart'));
+
+        chart.draw(data, options);
+      }
+    </script>
+</head>
+<body>
+<h3>PnL Positions</h3>
+<div id="pnl_line_chart" style="width: 2000px; height: 1000px"></div>
+</body>
+</html>

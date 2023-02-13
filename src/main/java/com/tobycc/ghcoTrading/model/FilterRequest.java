@@ -1,14 +1,8 @@
 package com.tobycc.ghcoTrading.model;
 
 import com.opencsv.bean.CsvBindByName;
-import com.opencsv.bean.CsvDate;
-import com.tobycc.ghcoTrading.model.enums.Action;
 import com.tobycc.ghcoTrading.model.enums.Currency;
 import com.tobycc.ghcoTrading.model.enums.Side;
-
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 public class FilterRequest {
 

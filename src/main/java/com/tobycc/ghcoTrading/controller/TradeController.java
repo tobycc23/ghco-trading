@@ -2,6 +2,7 @@ package com.tobycc.ghcoTrading.controller;
 
 import com.tobycc.ghcoTrading.file.CSVParser;
 import com.tobycc.ghcoTrading.model.PnLAggregationRequest;
+import com.tobycc.ghcoTrading.model.PnLPosition;
 import com.tobycc.ghcoTrading.model.Trade;
 import com.tobycc.ghcoTrading.service.TradeAggregationService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -9,28 +10,35 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.util.Collections;
 import java.util.List;
-
-import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+import java.util.Map;
 
 @Tag(name = "Trade Controller")
 @Validated
-@RestController
-@RequestMapping(path = {"/api/v1/trade"}, produces = APPLICATION_JSON_VALUE)
+@Controller
+@RequestMapping(path = {"/api/v1/trade"})
 public class TradeController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TradeController.class);
 
-    @Autowired
-    private CSVParser csvParser;
+    private final CSVParser csvParser;
+    private final Map<String, Trade> existingTrades;
+    private Map<String, List<PnLPosition>> aggregatedTrades;
+    private final TradeAggregationService tradeAggregationService;
 
-    @Autowired
-    private TradeAggregationService tradeAggregationService;
+    public TradeController(CSVParser csvParser, Map<String, Trade> existingTrades, Map<String, List<PnLPosition>> aggregatedTrades, TradeAggregationService tradeAggregationService) {
+        this.csvParser = csvParser;
+        this.existingTrades = existingTrades;
+        this.aggregatedTrades = aggregatedTrades;
+        this.tradeAggregationService = tradeAggregationService;
+    }
 
     @PostMapping
     @Operation(summary = "Persist a number of new trades")
@@ -42,10 +50,16 @@ public class TradeController {
         return csvParser.writeTradesIntoCsv(newTrades);
     }
 
-    @GetMapping
+    @PostMapping(value = "aggregate")
     @Operation(summary = "Get a PnL aggregation result based on input parameters")
-    public List<String> pnlAggregation(@RequestBody PnLAggregationRequest request) {
-        tradeAggregationService.aggregateTrades(null, null);
-        return null;
+    public Map<String, List<PnLPosition>> pnlAggregation(@RequestBody PnLAggregationRequest request) {
+        return tradeAggregationService.aggregateTrades(existingTrades, request);
+    }
+
+    @PostMapping(value = "aggregateAndVisualise")
+    @Operation(summary = "Get a PnL aggregation result based on input parameters and show graph")
+    public String pnlAggregationAndVisualisation(@RequestBody PnLAggregationRequest request) {
+        tradeAggregationService.aggregateTrades(existingTrades, request);
+        return "redirect:/api/v1/visualiser";
     }
 }

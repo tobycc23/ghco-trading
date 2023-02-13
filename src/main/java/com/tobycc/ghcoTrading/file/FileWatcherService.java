@@ -5,7 +5,6 @@ import com.tobycc.ghcoTrading.props.FileProps;
 import com.tobycc.ghcoTrading.service.TradeLoadingService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
@@ -21,17 +20,17 @@ public class FileWatcherService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FileWatcherService.class);
 
-    @Autowired
-    private Map<String, Trade> existingTrades;
+    private final Map<String, Trade> existingTrades;
+    private final TradeLoadingService tradeService;
+    private final FileProps fileProps;
+    private final WatchService watchService;
 
-    @Autowired
-    private TradeLoadingService tradeService;
-
-    @Autowired
-    private FileProps fileProps;
-
-    @Autowired
-    private WatchService watchService;
+    public FileWatcherService(Map<String, Trade> existingTrades, TradeLoadingService tradeService, FileProps fileProps, WatchService watchService) {
+        this.existingTrades = existingTrades;
+        this.tradeService = tradeService;
+        this.fileProps = fileProps;
+        this.watchService = watchService;
+    }
 
     @EventListener(ContextRefreshedEvent.class)
     public void watcher() throws InterruptedException, IOException {

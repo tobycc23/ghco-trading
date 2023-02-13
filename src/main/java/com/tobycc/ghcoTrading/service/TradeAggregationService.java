@@ -4,7 +4,7 @@ import com.tobycc.ghcoTrading.file.CSVParser;
 import com.tobycc.ghcoTrading.model.PnLAggregationRequest;
 import com.tobycc.ghcoTrading.model.PnLPosition;
 import com.tobycc.ghcoTrading.model.Trade;
-import com.tobycc.ghcoTrading.model.TradeFilter;
+import com.tobycc.ghcoTrading.model.enums.Action;
 import com.tobycc.ghcoTrading.model.enums.AggregateField;
 import com.tobycc.ghcoTrading.model.enums.Currency;
 import com.tobycc.ghcoTrading.model.enums.Side;
@@ -12,13 +12,13 @@ import com.tobycc.ghcoTrading.props.FileProps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.tobycc.ghcoTrading.model.enums.AggregateField.*;
@@ -30,20 +30,24 @@ public class TradeAggregationService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TradeAggregationService.class);
 
-    @Autowired
-    private CSVParser csvParser;
+    private Map<String, List<PnLPosition>> aggregatedTrades;
 
-    @Autowired
-    private FileProps fileProps;
+    private final CSVParser csvParser;
+    private final FileProps fileProps;
+
+    public TradeAggregationService(CSVParser csvParser, FileProps fileProps) {
+        this.csvParser = csvParser;
+        this.fileProps = fileProps;
+    }
 
     /**
      * Entry point to where the cleaned trades can be grouped and then aggregated depending on input criteria
      * @param trades
      * @param request
      */
-    public void aggregateTrades(Map<String, Trade> trades, PnLAggregationRequest request) {
+    public Map<String, List<PnLPosition>> aggregateTrades(Map<String, Trade> trades, PnLAggregationRequest request) {
         Map<String, List<Trade>> groupedTrades = groupTrades(trades, request);
-        processPnlAggregation(groupedTrades, request);
+        return processPnlAggregation(groupedTrades, request);
     }
 
     /**
@@ -63,7 +67,7 @@ public class TradeAggregationService {
         }
 
         //Split trades into aggregated levels based on the fields provided and filter on the trades we wish to see, else all
-        Stream<Trade> groupedTradesStream = trades.values().stream();
+        Stream<Trade> groupedTradesStream = trades.values().stream().filter(trade -> !trade.getAction().equals(Action.CANCEL));
         //Note: Currently filtering is just ORing on different trade filters, could do NOTs/ANDs/more complex conditions in future
         //e.g. TradeFilters = [{account="Account1", strategy="Strategy5"}, {strategy="Strategy6"} will return all trades that
         //are either "Account1" and "Strategy5" or just "Strategy6"
@@ -79,7 +83,7 @@ public class TradeAggregationService {
         return groupedTrades;
     }
 
-    public void processPnlAggregation(Map<String, List<Trade>> groupedTrades, PnLAggregationRequest request) {
+    public Map<String, List<PnLPosition>> processPnlAggregation(Map<String, List<Trade>> groupedTrades, PnLAggregationRequest request) {
         Map<String, List<PnLPosition>> pnlAggregated = groupedTrades.entrySet().stream()
                 .collect(toMap(
                         Map.Entry::getKey,
@@ -92,6 +96,9 @@ public class TradeAggregationService {
         if(fileProps.isOutputToCsv() && pnlAggregated.size() <= fileProps.getMaxFilesToOutput()) {
             csvParser.writeAggregationPositionsIntoCsv(pnlAggregated, request);
         }
+
+        setAggregatedTrades(pnlAggregated);
+        return pnlAggregated;
     }
 
     /**
@@ -144,4 +151,11 @@ public class TradeAggregationService {
         });
     }
 
+    public void setAggregatedTrades(Map<String, List<PnLPosition>> aggregatedTrades) {
+        this.aggregatedTrades = aggregatedTrades;
+    }
+
+    public Map<String, List<PnLPosition>> getAggregatedTrades() {
+        return aggregatedTrades;
+    }
 }

@@ -16,11 +16,13 @@ import static com.tobycc.ghcoTrading.model.enums.AggregateField.USER;
 @Service
 public class StartupService {
 
-    @Autowired
-    private Map<String, Trade> trades;
+    private final Map<String, Trade> trades;
+    private final TradeAggregationService tradeAggregationService;
 
-    @Autowired
-    private TradeAggregationService tradeAggregationService;
+    public StartupService(Map<String, Trade> trades, TradeAggregationService tradeAggregationService) {
+        this.trades = trades;
+        this.tradeAggregationService = tradeAggregationService;
+    }
 
     /**
      * To complete our task we can action the initial aggregation of pnl positions “per BBGCode, per portfolio,
@@ -29,14 +31,14 @@ public class StartupService {
     @PostConstruct
     public void aggregateInitialTrades() {
         //For our example we will convert our aggregations into one currency via FX conversion
-        tradeAggregationService.aggregateTrades(trades, new PnLAggregationRequest(
-                Optional.of(new TreeSet<>(Arrays.asList(BBG_CODE, PORTFOLIO, STRATEGY, USER))),
-                Optional.of(Currency.USD),
-                Optional.of(new HashSet<>(Arrays.asList(
-                        new TradeFilter(Optional.empty(), Optional.empty(), Optional.empty(), Optional.of("Account1"), Optional.of("Strategy5"), Optional.empty()),
-                        new TradeFilter(Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.of("Strategy6"), Optional.empty())
-                )))
-        ));
+//        tradeAggregationService.aggregateTrades(trades, new PnLAggregationRequest(
+//                Optional.of(new TreeSet<>(Arrays.asList(BBG_CODE, PORTFOLIO, STRATEGY, USER))),
+//                Optional.of(Currency.USD),
+//                Optional.of(new HashSet<>(Arrays.asList(
+//                        new TradeFilter(Optional.empty(), Optional.empty(), Optional.empty(), Optional.of("Account1"), Optional.of("Strategy5"), Optional.empty()),
+//                        new TradeFilter(Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.of("Strategy6"), Optional.empty())
+//                )))
+//        ));
 
         //Could do following too/instead if we wanted it split by currency instead of converted into USD
         //This would lead to 11,661 different aggregations which would not be that useful

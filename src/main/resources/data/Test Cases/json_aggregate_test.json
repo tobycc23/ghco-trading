@@ -1,0 +1,15 @@
+{
+  "aggregationFields": [
+    "BBG_CODE", "PORTFOLIO", "STRATEGY", "USER"
+  ],
+  "convertIntoCurrency": "USD",
+  "filters": [
+    {
+      "strategy": "Strategy6"
+    },
+    {
+      "account": "Account1",
+      "strategy": "Strategy5"
+    }
+  ]
+}

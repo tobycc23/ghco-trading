@@ -18,11 +18,13 @@ public class TradeLoadingService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TradeLoadingService.class);
 
-    @Autowired
-    private CSVParser csvParser;
+    private final CSVParser csvParser;
+    private final FileProps fileProps;
 
-    @Autowired
-    private FileProps fileProps;
+    public TradeLoadingService(CSVParser csvParser, FileProps fileProps) {
+        this.csvParser = csvParser;
+        this.fileProps = fileProps;
+    }
 
     @Bean
     public Map<String,Trade> loadInitialTrades() {

@@ -33,8 +33,11 @@ public class CSVParser {
     private static final String[] HEADERS = new String[]{"TradeID","BBGCode","Currency","Side","Price","Volume","Portfolio","Action","Account",
             "Strategy","User","TradeTimeUTC","ValueDate"};
 
-    @Autowired
-    private FileProps fileProps;
+    private final FileProps fileProps;
+
+    public CSVParser(FileProps fileProps) {
+        this.fileProps = fileProps;
+    }
 
     /**
      * Small robustness checks on file (ensure it is a csv and the headers are as expected - rest left to the csv to bean parser)

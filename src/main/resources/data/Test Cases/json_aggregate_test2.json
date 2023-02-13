@@ -1,0 +1,14 @@
+{
+  "aggregationFields": [
+    "USER"
+  ],
+  "convertIntoCurrency": "GBP",
+  "filters": [
+    {
+      "bbgCode": "VOO US ETF",
+      "strategy": "Strategy6",
+      "portfolio": "portfolio1",
+      "account": "Account1"
+    }
+  ]
+}
