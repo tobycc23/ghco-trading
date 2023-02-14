@@ -15,4 +15,4 @@
   ]
 }
 
-//Screenshot graph and compare after step _4 to see the difference.
+//Screenshot graph and compare after step _4 to see the difference. In particular, observe User5 and User4 lines

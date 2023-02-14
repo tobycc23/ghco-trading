@@ -86,6 +86,12 @@ public class TradeAggregationService {
         return groupedTrades;
     }
 
+    /**
+     * Taking in the grouped trades, we then carry out the PnL aggregation and return the results in various ways
+     * @param groupedTrades
+     * @param request
+     * @return
+     */
     public Map<String, List<PnLPosition>> processPnlAggregation(Map<String, List<Trade>> groupedTrades, PnLAggregationRequest request) {
         Map<String, List<PnLPosition>> pnlAggregated = groupedTrades.entrySet().stream()
                 .collect(toMap(

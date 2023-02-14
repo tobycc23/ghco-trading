@@ -7,4 +7,5 @@ public record PnLPosition(
         LocalDateTime dateTime,
         BigDecimal position) {
 
+
 }

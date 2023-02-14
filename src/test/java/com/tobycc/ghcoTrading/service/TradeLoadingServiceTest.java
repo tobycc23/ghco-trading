@@ -5,7 +5,7 @@ import com.tobycc.ghcoTrading.model.enums.Action;
 import com.tobycc.ghcoTrading.model.enums.Currency;
 import com.tobycc.ghcoTrading.model.enums.Side;
 import com.tobycc.ghcoTrading.props.FileProps;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -24,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @SpringBootTest
 @EnableConfigurationProperties
 @ActiveProfiles("test")
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class TradeLoadingServiceTest {
 
     @SpyBean
@@ -33,6 +34,7 @@ class TradeLoadingServiceTest {
     private FileProps fileProps;
 
     @Test
+    @Order(1)
     public void loadInitialTrades_Success() {
         assertEquals(6, tradeLoadingService.getLoadedTrades().keySet().size());
     }
