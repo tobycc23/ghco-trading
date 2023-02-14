@@ -56,7 +56,7 @@ public class TradeLoadingService {
      * TODO: It would be good to have an extra column for "DateTimeCreated" to show when the record itself was created
      *  so that the TradeTimeInUTC could potentially be modified and we can still tell when the most recent AMEND arrives,
      *  irrespective of this.
-     * No current logic to "uncancel" a trade by doing a consequent AMEND - this could be implemented if that logic is desired.
+     * Current logic is NOT to "uncancel" a trade by doing a consequent AMEND - this could be implemented if that logic is desired
      *
      * @return filtered Map of trades
      */
@@ -68,7 +68,7 @@ public class TradeLoadingService {
                     t.getTradeId(),
                     t,
                     //The following remapping could be replaced by calling `robustFiltering(currTrade, newTrade)`
-                    //for thorough robustness checks on the data.
+                    //for thorough robustness checks on the data, but this is simpler for now
                     (currTrade, newTrade) -> {
                         //Current trade is NEW, lowest priority, must be overwritten. Or if new trade arriving is CANCEL,
                         //highest priority, it must overwrite.

@@ -1,4 +1,5 @@
-//Run from "Aggregate Only" then "Show Graph"
+//Run POST /api/v1/trade/aggregate then /api/v1/trade/aggregateAndVisualise from Postman with response visualiser
+// to see graphical representation, with body:
 
 {
   "aggregationFields": [

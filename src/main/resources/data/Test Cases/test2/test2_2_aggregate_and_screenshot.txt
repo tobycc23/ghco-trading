@@ -1,3 +1,5 @@
+//Run POST /api/v1/trade/aggregateAndVisualise from Postman with response visualiser to see graphical representation, with body:
+
 {
   "aggregationFields": [
     "USER"
@@ -12,3 +14,5 @@
     }
   ]
 }
+
+//Screenshot graph and compare after step _4 to see the difference.

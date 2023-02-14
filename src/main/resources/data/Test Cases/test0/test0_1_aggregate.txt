@@ -1,4 +1,5 @@
-//Run from "AggregateOnly"
+//Run POST /api/v1/trade/aggregate with body:
+
 {
   "aggregationFields": [
     "BBG_CODE", "PORTFOLIO", "STRATEGY", "USER"

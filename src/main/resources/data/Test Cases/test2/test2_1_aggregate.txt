@@ -1,3 +1,5 @@
+//Run POST /api/v1/trade/aggregateAndVisualise from Postman with response visualiser to see graphical representation, with body:
+
 {
   "aggregationFields": [
     "USER","ACCOUNT"

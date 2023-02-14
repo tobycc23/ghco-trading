@@ -2,6 +2,8 @@ file:
   baseDirectory: "/Users/tobycc/Documents/Projects/GHCOTrading/src/test/resources/data"
   inputDirectory: "input"
   outputDirectory: "output"
+  maxFilesToOutput: 2000
+
+aggregation:
   outputToCsv: false
   outputToConsole: false
-  maxFilesToOutput: 2000

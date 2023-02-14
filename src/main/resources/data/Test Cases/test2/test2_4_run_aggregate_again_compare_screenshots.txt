@@ -1,0 +1,1 @@
+//Rerun the same aggregation call as in _2 and compare the differences after the trades have been added in.

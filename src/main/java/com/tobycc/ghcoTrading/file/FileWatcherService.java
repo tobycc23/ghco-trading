@@ -5,6 +5,7 @@ import com.tobycc.ghcoTrading.props.FileProps;
 import com.tobycc.ghcoTrading.service.TradeLoadingService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,7 @@ import java.nio.file.WatchService;
 import java.util.Map;
 
 @Service
+@Profile("!(test)")
 public class FileWatcherService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FileWatcherService.class);

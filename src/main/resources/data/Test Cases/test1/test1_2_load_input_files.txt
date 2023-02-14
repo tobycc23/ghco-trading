@@ -1,0 +1,3 @@
+//Drop following files into "input" then rerun _1 after each. On the graph representation the changes should be noticeable
+//Restart to show trades have persisted and results are the same.
+//Note: Could drop both files in at the same time.

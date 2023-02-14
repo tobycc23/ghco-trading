@@ -1,3 +1,5 @@
+//Run POST /api/v1/trade to load in trades via the API rather than file drop (CSVs will be creating out of these), with body:
+
 [
   {
     "tradeId": "f033fcaf0f164f99886a6bd624100000",
