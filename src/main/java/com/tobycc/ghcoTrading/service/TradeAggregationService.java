@@ -9,6 +9,7 @@ import com.tobycc.ghcoTrading.model.enums.Action;
 import com.tobycc.ghcoTrading.model.enums.AggregateField;
 import com.tobycc.ghcoTrading.model.enums.Currency;
 import com.tobycc.ghcoTrading.model.enums.Side;
+import com.tobycc.ghcoTrading.props.AggregationProps;
 import com.tobycc.ghcoTrading.props.FileProps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,10 +35,12 @@ public class TradeAggregationService {
 
     private final CSVParser csvParser;
     private final FileProps fileProps;
+    private final AggregationProps aggregationProps;
 
-    public TradeAggregationService(CSVParser csvParser, FileProps fileProps) {
+    public TradeAggregationService(CSVParser csvParser, FileProps fileProps, AggregationProps aggregationProps) {
         this.csvParser = csvParser;
         this.fileProps = fileProps;
+        this.aggregationProps = aggregationProps;
     }
 
     /**
@@ -91,12 +94,12 @@ public class TradeAggregationService {
                 ));
 
         //TODO following two steps of outputting aggregated data is better done via async job (via ActiveMQ etc) so REST call returns quickly
-        if(fileProps.isOutputToConsole()) {
+        if(aggregationProps.isOutputToConsole()) {
             pnlAggregationPrinter(pnlAggregated, request);
         }
 
         //We don't want to write this information to files if it goes over a predefined threshold
-        if(fileProps.isOutputToCsv() && pnlAggregated.size() <= fileProps.getMaxFilesToOutput()) {
+        if(aggregationProps.isOutputToCsv() && pnlAggregated.size() <= fileProps.getMaxFilesToOutput()) {
             csvParser.writeAggregationPositionsIntoCsv(pnlAggregated, request);
         }
 

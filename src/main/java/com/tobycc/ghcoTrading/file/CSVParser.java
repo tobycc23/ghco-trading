@@ -60,14 +60,14 @@ public class CSVParser {
                 return Optional.empty();
             }
 
-            return Optional.of(readTradesFromCsv(file));
+            return readTradesFromCsv(file);
         } catch(IOException e) {
             LOGGER.error("Error reading from file: " + e.getMessage());
             return Optional.empty();
         }
     }
 
-    public List<Trade> readTradesFromCsv(String file) throws IOException {
+    public Optional<List<Trade>> readTradesFromCsv(String file) {
         LOGGER.info("Reading trades from file: "  + file);
         try {
             FileReader in = new FileReader(file);
@@ -80,10 +80,10 @@ public class CSVParser {
             List<Trade> trades = csvToBean.parse();
             in.close();
             LOGGER.info("Completed read of trades from file: " + file);
-            return trades;
-        } catch (IOException e) {
-            LOGGER.error("Trades could not be read in");
-            throw e;
+            return Optional.of(trades);
+        } catch (Exception e) {
+            LOGGER.error("Trades could not be read in due to: " + e.getMessage());
+            return Optional.empty();
         }
     }
 
@@ -117,17 +117,15 @@ public class CSVParser {
             beanToCsv.write(rawTrades);
             writer.close();
             return rawTrades.stream().map(Trade::getTradeId).toList();
-        }  catch (IOException e) {
+        }  catch (IOException | CsvRequiredFieldEmptyException | CsvDataTypeMismatchException e) {
             LOGGER.error("Failed to create csv file " + outputFile + ": " + e.getMessage());
             return Collections.emptyList();
-        } catch (CsvRequiredFieldEmptyException | CsvDataTypeMismatchException e) {
-            throw new RuntimeException(e);
         }
     }
 
     public void writeAggregationPositionsIntoCsv(Map<String, List<PnLPosition>> pnlAggregated, PnLAggregationRequest request) {
         String outputDirectory = fileProps.getBaseDirectory() + "/" +
-                fileProps.getOutputDirectory() + "/" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HH:mm:ss"));
+                fileProps.getOutputDirectory() + "/aggregation_" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HH:mm:ss"));
         try {
             Files.createDirectories(Path.of(outputDirectory));
             LOGGER.info("Output directory " + outputDirectory + " created successfully");
@@ -152,14 +150,14 @@ public class CSVParser {
                     LOGGER.info("Writing csv file for " + outputFile);
                     beanToCsv.write(value);
                     writer.close();
-                }  catch (IOException e) {
+                }  catch (IOException | CsvRequiredFieldEmptyException | CsvDataTypeMismatchException e) {
                     LOGGER.error("Failed to create csv file " + outputFile + ": " + e.getMessage());
-                } catch (CsvRequiredFieldEmptyException | CsvDataTypeMismatchException e) {
-                    throw new RuntimeException(e);
                 }
             });
         } catch (IOException e) {
             LOGGER.error("Failed to create directory " + outputDirectory + ": " + e.getMessage());
         }
     }
+
+    //TODO for future iterations, could add a loader for aggregations which can then be visualised
 }

@@ -86,6 +86,23 @@ public class Trade{
         public Trade() {
         }
 
+        public Trade(String tradeId, String bbgCode, Currency ccy, Side side, BigDecimal price, Integer volume,
+                     String portfolio, Action action, String account, String strategy, String user, LocalDateTime dateTime, LocalDate date) {
+                this.tradeId = tradeId;
+                this.bbgCode = bbgCode;
+                this.ccy = ccy;
+                this.side = side;
+                this.price = price;
+                this.volume = volume;
+                this.portfolio = portfolio;
+                this.action = action;
+                this.account = account;
+                this.strategy = strategy;
+                this.user = user;
+                this.dateTime = dateTime;
+                this.date = date;
+        }
+
         public String getTradeId() {
                 return tradeId;
         }

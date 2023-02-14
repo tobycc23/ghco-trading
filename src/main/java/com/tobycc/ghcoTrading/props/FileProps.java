@@ -1,6 +1,7 @@
 package com.tobycc.ghcoTrading.props;
 
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
@@ -17,14 +18,8 @@ public class FileProps{
     @NotEmpty
     private String outputDirectory;
 
-    @NotEmpty
-    private boolean outputToCsv;
-
-    @NotEmpty
-    private boolean outputToConsole;
-
-    @NotEmpty
-    private int maxFilesToOutput;
+    @NotNull
+    private Integer maxFilesToOutput;
 
     public String getBaseDirectory() {
         return baseDirectory;
@@ -50,27 +45,11 @@ public class FileProps{
         this.outputDirectory = outputDirectory;
     }
 
-    public boolean isOutputToCsv() {
-        return outputToCsv;
-    }
-
-    public void setOutputToCsv(boolean outputToCsv) {
-        this.outputToCsv = outputToCsv;
-    }
-
-    public int getMaxFilesToOutput() {
+    public Integer getMaxFilesToOutput() {
         return maxFilesToOutput;
     }
 
-    public void setMaxFilesToOutput(int maxFilesToOutput) {
+    public void setMaxFilesToOutput(Integer maxFilesToOutput) {
         this.maxFilesToOutput = maxFilesToOutput;
-    }
-
-    public boolean isOutputToConsole() {
-        return outputToConsole;
-    }
-
-    public void setOutputToConsole(boolean outputToConsole) {
-        this.outputToConsole = outputToConsole;
     }
 }
